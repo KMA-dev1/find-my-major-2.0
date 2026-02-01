@@ -106,7 +106,7 @@ if st.session_state.step < 5:
 
 else:
     st.balloons()
-    HF_TOKEN = "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"
+    HF_TOKEN = st.secrets["HF_TOKEN"]
     
     st.write("### اكتملت الإجابات! اضغط للتحليل")
     if st.button("🔍 تحليل النتائج الآن", type="primary"):
