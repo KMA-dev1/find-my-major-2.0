@@ -19,56 +19,80 @@ else:
 
 st.markdown(f"""
     <style>
-    /* --- إخفاء العلامة المائية وجميع زوائد ستريمليت --- */
-    #MainMenu, footer, header {{ visibility: hidden; }}
-    .stDeployButton, [data-testid="stDecoration"] {{ display:none; visibility: hidden; }}
+    /* 1. إخفاء العلامة المائية وجميع زوائد ستريمليت الافتراضية */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden !important;}}
+    header {{visibility: hidden;}}
     
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    /* إخفاء شريط التزيين العلوي وزر Deploy وأداة المساعدة */
+    .stDeployButton, [data-testid="stDecoration"], [data-testid="stHeader"], [data-testid="stStatusWidget"] {{
+        display: none !important;
+        visibility: hidden !important;
+    }}
     
-    .stApp {{ background-color: {main_bg}; }}
-
-    /* تنسيق النصوص */
-    h1, h2, h3, p, div {{
-        color: {content_text} !important;
-        font-family: 'Cairo', sans-serif !important;
-        direction: rtl; text-align: center;
+    /* منع ظهور علامة "Hosted with Streamlit" التي تظهر في أسفل يمين الشاشة */
+    .viewerBadge_container__1QSob, .viewerBadge_link__1QSob, [class^="viewerBadge"] {{
+        display: none !important;
     }}
 
-    /* تنسيق أزرار الخيارات */
+    /* 2. تحسين الخطوط والتنسيق العام */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    
+    .stApp {{ 
+        background-color: {main_bg}; 
+    }}
+
+    h1, h2, h3, p, div, label, span {{
+        color: {content_text} !important;
+        font-family: 'Cairo', sans-serif !important;
+        direction: rtl; 
+        text-align: center;
+    }}
+
+    /* 3. تنسيق أزرار الخيارات (البديل لمنع تداخل النقاط) */
     .stButton > button {{
         width: 100% !important;
         background-color: {card_bg} !important;
         color: {content_text} !important;
         border: 1px solid {accent} !important;
-        padding: 15px !important;
-        border-radius: 10px !important;
-        margin-bottom: 10px !important;
-        transition: 0.3s;
+        padding: 18px !important;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
+        transition: all 0.3s ease;
         font-size: 18px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }}
 
     .stButton > button:hover {{
         background-color: {accent} !important;
         color: white !important;
-        transform: scale(1.02);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     }}
 
-    /* تلوين شريط التقدم */
-    .stProgress > div > div > div > div {{ background-color: {accent} !important; }}
+    /* 4. تنسيق شريط التقدم وصندوق النتائج */
+    .stProgress > div > div > div > div {{ 
+        background-color: {accent} !important; 
+    }}
 
-    /* صندوق النتيجة */
     .result-container {{
         background-color: {res_box} !important;
         color: {res_text} !important;
-        padding: 30px; border-radius: 15px;
-        text-align: center; direction: rtl; line-height: 2.2;
+        padding: 30px; 
+        border-radius: 15px;
+        text-align: center; 
+        direction: rtl; 
+        line-height: 2.2;
         border: 2px solid {accent};
     }}
 
     .main-major {{
-        font-size: 35px !important; font-weight: 800;
-        color: {accent} !important; display: block; 
-        margin-bottom: 20px; text-decoration: underline;
+        font-size: 35px !important; 
+        font-weight: 800;
+        color: {accent} !important; 
+        display: block; 
+        margin-bottom: 20px; 
+        text-decoration: underline;
     }}
     </style>
     """, unsafe_allow_html=True)
