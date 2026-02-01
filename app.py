@@ -17,9 +17,31 @@ else:
     main_bg, content_text, card_bg, accent = "#ffffff", "#1a1a1a", "#f0f2f6", "#2e7d32"
     res_box, res_text = "#f1f8e9", "#1E3A8A"
 
+import streamlit as st
+from huggingface_hub import InferenceClient
+
+# 1. إعداد الواجهة
+st.set_page_config(page_title="Major Finder 3.0", page_icon="🎓", layout="centered")
+
+# خيار المظهر
+col_title, col_mode = st.columns([4, 1])
+with col_mode:
+    mode = st.selectbox("🌓 المظهر", ["الوضع الغامق", "الوضع الفاتح"], label_visibility="collapsed")
+
+# تعريف الألوان
+if mode == "الوضع الغامق":
+    main_bg, content_text, card_bg, accent = "#0e1117", "#ffffff", "#1e293b", "#3b82f6"
+    res_box, res_text = "#112233", "#3399ff"
+else:
+    main_bg, content_text, card_bg, accent = "#ffffff", "#1a1a1a", "#f0f2f6", "#2e7d32"
+    res_box, res_text = "#f1f8e9", "#1E3A8A"
+
 st.markdown(f"""
     <style>
-    #MainMenu, footer, header, .stDeployButton {{ visibility: hidden; display:none; }}
+    /* --- إخفاء العلامة المائية وجميع زوائد ستريمليت --- */
+    #MainMenu, footer, header {{ visibility: hidden; }}
+    .stDeployButton, [data-testid="stDecoration"] {{ display:none; visibility: hidden; }}
+    
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
     
     .stApp {{ background-color: {main_bg}; }}
@@ -31,7 +53,7 @@ st.markdown(f"""
         direction: rtl; text-align: center;
     }}
 
-    /* تنسيق أزرار الخيارات الجديدة */
+    /* تنسيق أزرار الخيارات */
     .stButton > button {{
         width: 100% !important;
         background-color: {card_bg} !important;
@@ -50,7 +72,7 @@ st.markdown(f"""
         transform: scale(1.02);
     }}
 
-    /* شريط التقدم */
+    /* تلوين شريط التقدم */
     .stProgress > div > div > div > div {{ background-color: {accent} !important; }}
 
     /* صندوق النتيجة */
@@ -69,6 +91,67 @@ st.markdown(f"""
     }}
     </style>
     """, unsafe_allow_html=True)
+
+# 2. منطق الأسئلة
+if 'step' not in st.session_state:
+    st.session_state.step = 0
+    st.session_state.answers = []
+
+questions = [
+    "1. ما هو نوع النشاط الذي يثير شغفك؟",
+    "2. كيف تفضل حل المشكلات المعقدة؟",
+    "3. ما هو المجال الذي تجد نفسك مبدعاً فيه؟",
+    "4. في أي بيئة عمل ترى نفسك مستقبلاً؟",
+    "5. ما هو الدافع الأكبر لنجاحك المهني؟"
+]
+options = [
+    ["بناء الأنظمة والبرمجة", "الرعاية الطبية والعلوم", "القيادة وإدارة الأعمال", "الفنون والتصميم الإبداعي", "الأبحاث والاكتشافات العلمية"],
+    ["التحليل المنطقي والبيانات", "التواصل المباشر والتعاطف", "التخطيط الاستراتيجي والتنظيم", "التجربة العملية والابتكار", "التفكير الفلسفي والنقدي"],
+    ["الرياضيات والتقنيات", "اللغات والعلوم الإنسانية", "الاقتصاد والعلوم السياسية", "الفيزياء والهندسة", "القانون والمرافعة"],
+    ["خلف الشاشات والخوارزميات", "في المستشفيات أو المختبرات", "في المكاتب والاجتماعات", "في الميدان أو المواقع الإنشائية", "في مراكز التدريب والتعليم"],
+    ["إحداث ثورة تقنية", "مساعدة البشرية وتحسين الصحة", "تحقيق الريادة والمال", "ترك بصمة إبداعية ملهمة", "الوصول لحقائق علمية جديدة"]
+]
+
+st.title("🎓 اكتشف تخصصك الجامعي")
+
+if st.session_state.step < 5:
+    step = st.session_state.step
+    st.write(f"### {questions[step]}")
+    
+    # تعديل شريط التقدم ليبدأ من صفر (0/5 في البداية)
+    st.progress(step / 5)
+    
+    for idx, opt in enumerate(options[step]):
+        if st.button(opt, key=f"btn_{step}_{idx}"):
+            st.session_state.answers.append(opt)
+            st.session_state.step += 1
+            st.rerun()
+
+else:
+    # شريط مكتمل عند النهاية
+    st.progress(1.0)
+    st.balloons()
+    
+    try:
+        HF_TOKEN = st.secrets["HF_TOKEN"]
+    except:
+        st.error("يرجى ضبط HF_TOKEN في Secrets")
+        st.stop()
+    
+    if st.button("🔍 تحليل النتائج الآن", type="primary"):
+        client = InferenceClient(api_key=HF_TOKEN)
+        user_data = " | ".join(st.session_state.answers)
+        messages = [{"role": "system", "content": "مستشار أكاديمي. اعرض التخصص في أول سطر داخل <span class='main-major'>[التخصص]</span>."},
+                    {"role": "user", "content": f"الميول: {user_data}"}]
+        with st.spinner("🧠 جاري التحليل..."):
+            response = client.chat_completion(model="Qwen/Qwen2.5-72B-Instruct", messages=messages, max_tokens=800)
+            output = response.choices[0].message.content
+            st.markdown(f'<div class="result-container">{output.replace("- ", "• ").replace("\n", "<br>")}</div>', unsafe_allow_html=True)
+
+    if st.button("🔄 إعادة الاختبار"):
+        st.session_state.step = 0
+        st.session_state.answers = []
+        st.rerun()
 
 # 2. منطق الأسئلة
 if 'step' not in st.session_state:
